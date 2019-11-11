@@ -14,11 +14,17 @@ class WebSocketHandler(StreamRequestHandler):
     def connect(self):
         request = self.server.recv(10000).decode('utf-8')
         print(request)
+        
+        # disini parse frame
+        # kalo hasil parsenya berupa header handshake,
         response = req_handshake(request)
         self.server.sendall(response.encode('ascii'))
+        # else 
+        # !echo, !submission, ping pong
 
-        while (True):
-            buff = self.server.recv(10000)
-            print("wait for print")
-            # keluarnya aneh
-            print(buff)
+        
+        # while (True):
+        #     buff = self.server.recv(10000)
+        #     print("wait for print")
+        #     # keluarnya aneh
+        #     print(buff)
