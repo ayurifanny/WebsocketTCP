@@ -3,7 +3,7 @@ import socket
 from threading import Thread
 import codecs
 from socketserver import StreamRequestHandler
-
+from framing import *
 
 class WebSocketHandler(StreamRequestHandler):
     def __init__(self,  socket, addr, server):
@@ -19,12 +19,9 @@ class WebSocketHandler(StreamRequestHandler):
         # kalo hasil parsenya berupa header handshake,
         response = req_handshake(request)
         self.server.sendall(response.encode('ascii'))
-        # else 
+        # else
+        while (True):
+            buff = self.server.recv(10000)
+            payload = parse(buff)
+            print(payload['PAYLOAD'].decode())
         # !echo, !submission, ping pong
-
-        
-        # while (True):
-        #     buff = self.server.recv(10000)
-        #     print("wait for print")
-        #     # keluarnya aneh
-        #     print(buff)
