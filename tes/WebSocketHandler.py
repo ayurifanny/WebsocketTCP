@@ -4,23 +4,28 @@ from threading import Thread
 import codecs
 from socketserver import StreamRequestHandler
 from framing import *
+import threading
 
 class WebSocketHandler(StreamRequestHandler):
     def __init__(self,  socket, addr, server):
-        Thread.__init__(self)
         self.server = server
         StreamRequestHandler.__init__(self, socket, addr, server)
-    
+        server_thread = threading.Thread(target=self.connect)
+        # Exit the server thread when the main thread terminates
+        server_thread.daemon = True
+        server_thread.start()
+
+
     def connect(self):
         request = self.server.recv(10000).decode('utf-8')
-        print(request)
-        
+        # print(request)
         # disini parse frame
         # kalo hasil parsenya berupa header handshake,
-        response = req_handshake(request)
+        response, self.handshake_done = req_handshake(request)
+        print(self.handshake_done)
         self.server.send(response.encode('ascii'))
         # else
-        while (True):
+        while (self.handshake_done):
             buff = self.server.recv(10000)
             payload = parse(buff)
 
@@ -33,9 +38,10 @@ class WebSocketHandler(StreamRequestHandler):
                 else:
                     packet = build(payload, "")
                     self.server.send(packet)
-            else:
+            elif received_message[0] == "!submission":
                 packet = build(payload, "")
                 self.server.send(packet)
 
 
         # !echo, !submission, ping pong
+

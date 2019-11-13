@@ -47,16 +47,19 @@ def req_handshake(request):
         assert headers['upgrade'].lower() == 'websocket'
     except AssertionError:
         response = handshake_response_failed(request)
+        valid = False
             # request.keep_alive = False
     if (get_method.upper().startswith('GET')):
         try:
             key = headers['sec-websocket-key']
             response = handshake_response_success(request, key)
+            valid = True
         except KeyError:
             print("NO KEY AW")
             # request.keep_alive = False
             response = handshake_response_failed(request)
-    return response
+            valid = False
+    return response, valid
 
 def handshake_response_success(request, key):
     hashed = sha1(key.encode() + GUID.encode())
