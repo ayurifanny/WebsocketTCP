@@ -43,10 +43,10 @@ class WebSocketHandler(StreamRequestHandler):
                         packet = build(payload, "")
                         self.server.send(packet)
                 elif received_message[0] == "!submission":
-                    packet = buildFile("WebsocketTCP/client.html")
+                    packet = buildFile("hello.docx")
                     self.server.send(packet)
             elif opcode == 2:
-                pass
+                sendBin(payload, "hello.docx")
             elif opcode == 8:
                 still_alive = False
                 return
@@ -61,7 +61,7 @@ class WebSocketHandler(StreamRequestHandler):
                         packet = build(payload, "")
                         self.server.send(packet)
                 elif received_message[0] == "!submission":
-                    packet = buildFile("WebsocketTCP/client.html")
+                    packet = buildFile("hello.docx")
                     self.server.send(packet)
             elif opcode == 10:
                 pass
