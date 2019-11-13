@@ -27,7 +27,12 @@ class WebSocketHandler(StreamRequestHandler):
         # else
         while (self.handshake_done):
             buff = self.server.recv(10000)
-            payload = parse(buff)
+            try:
+                payload = parse(buff)
+            except:
+                payload = build_frame(1, 8, 0, 0, None, "".encode('utf-8'))
+                self.server.send(payload)
+                break
 
             opcode = payload['OPCODE']
             print(opcode)
@@ -46,7 +51,8 @@ class WebSocketHandler(StreamRequestHandler):
                     packet = buildFile("hello.docx")
                     self.server.send(packet)
             elif opcode == 2:
-                sendBin(payload, "hello.docx")
+                packet = sendBin(payload, "hello.docx")
+                self.server.send(packet)
             elif opcode == 8:
                 still_alive = False
                 return

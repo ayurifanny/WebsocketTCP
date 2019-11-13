@@ -1,5 +1,6 @@
 import codecs
 import struct
+from hashlib import md5
 
 # WebSocket frame structure
 '''
@@ -44,9 +45,9 @@ def unmask(payload, key):
 # frame parsing, seperating each sector in frame structure
 def parse(frame):
     fin = frame[0] >> 7
-    rsv1 = (frame[0] & 0x40) >> 6
-    rsv2 = (frame[0] & 0x20) >> 5
-    rsv3 = (frame[0] & 0x10) >> 4
+    rsv1 = (frame[0] & 0x40) >> 7
+    rsv2 = (frame[0] & 0x20) >> 7
+    rsv3 = (frame[0] & 0x10) >> 7
     opcode = frame[0] & 0x0f
 
     mask = frame[1] >> 7
@@ -116,7 +117,6 @@ def build(frame, command):
     if (command == "echo"):
         phrase = frame['PAYLOAD'].decode().split(" ", 1)
         packet.extend(phrase[1].encode())
-        print(packet)
     else:
         packet.extend(frame['PAYLOAD'])
 
@@ -170,3 +170,26 @@ def sendBin(payload, path):
         packet.append(0)
     
     return packet
+
+def build_frame(fin, opcode, mask, payload_len, masking_key, payload):
+	# build our frame first byte
+	first_byte = (fin << 7) + (0 << 6) + (0 << 5) + (0 << 4) + opcode
+	first_byte = intToBytes(first_byte)
+
+	# build the next byte
+	if (payload_len < 0x7e):
+		second = intToBytes((mask << 7) + payload_len)
+	elif (payload_len < 2**16):
+		second = intToBytes((mask << 7) + 0x7e) + intToBytes(payload_len, 4)
+	else:
+		second = intToBytes((mask << 7) + 0x7f) + intToBytes(payload_len, 16)
+
+	# third = ''.encode('utf-8')
+	if (mask == 1):
+		third = masking_key
+		last = unmask(payload, masking_key)
+		return first_byte + second + third + last		
+	else:
+		last = payload
+		# print(type(first_byte), type(second), type(last))
+		return first_byte + second +  last
