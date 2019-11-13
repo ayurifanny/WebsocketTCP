@@ -23,10 +23,19 @@ class WebSocketHandler(StreamRequestHandler):
         while (True):
             buff = self.server.recv(10000)
             payload = parse(buff)
-            print(payload['PAYLOAD'].decode())
 
-            packet = build(payload)
-            self.server.send(packet)
+            mss = payload['PAYLOAD'].decode()
+            received_message = mss.split(' ', 1)
+            if received_message[0] == '!echo':
+                if len(received_message) > 1:
+                    packet = build(payload, "echo")
+                    self.server.send(packet)
+                else:
+                    packet = build(payload, "")
+                    self.server.send(packet)
+            else:
+                packet = build(payload, "")
+                self.server.send(packet)
 
 
         # !echo, !submission, ping pong

@@ -93,11 +93,14 @@ def parse(frame):
 
     return result
 
-def build(frame):
+def build(frame, command):
     packet = bytearray()
     packet.append(frame['FIN'] << 7 | frame['OPCODE'])
     
     length = frame['PAYLOAD_LEN']
+    if (command == "echo"):
+        length -= 6
+
     if (length <= 125):
         packet.append(length)
     elif (length > 125 and length <= 65535):
@@ -107,8 +110,17 @@ def build(frame):
         packet.append(127)
         packet.extend(struct.pack(">Q", length))
     else:
-        print("Message too big")
-        return
+        raise Exception("Message too big")
 
-    packet.extend(frame['PAYLOAD'])
+    if (command == "echo"):
+        phrase = frame['PAYLOAD'].decode().split(" ", 1)
+        packet.extend(phrase[1].encode())
+        print(packet)
+    elif (command == "submission"):
+        pass
+    elif (command == "file"):
+        pass
+    else:
+        packet.extend(frame['PAYLOAD'])
+
     return packet
