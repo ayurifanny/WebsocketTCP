@@ -18,10 +18,15 @@ class WebSocketHandler(StreamRequestHandler):
         # disini parse frame
         # kalo hasil parsenya berupa header handshake,
         response = req_handshake(request)
-        self.server.sendall(response.encode('ascii'))
+        self.server.send(response.encode('ascii'))
         # else
         while (True):
             buff = self.server.recv(10000)
             payload = parse(buff)
             print(payload['PAYLOAD'].decode())
+
+            packet = build(payload)
+            self.server.send(packet)
+
+
         # !echo, !submission, ping pong

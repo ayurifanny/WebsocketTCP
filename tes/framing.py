@@ -1,4 +1,5 @@
 import codecs
+import struct
 
 # WebSocket frame structure
 '''
@@ -91,3 +92,23 @@ def parse(frame):
     }
 
     return result
+
+def build(frame):
+    packet = bytearray()
+    packet.append(frame['FIN'] << 7 | frame['OPCODE'])
+    
+    length = frame['PAYLOAD_LEN']
+    if (length <= 125):
+        packet.append(length)
+    elif (length > 125 and length <= 65535):
+        packet.append(126)
+        packet.extend(struct.pack(">H", length))
+    elif (length < 18446744073709551616):
+        packet.append(127)
+        packet.extend(struct.pack(">Q", length))
+    else:
+        print("Message too big")
+        return
+
+    packet.extend(frame['PAYLOAD'])
+    return packet
