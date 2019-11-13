@@ -95,8 +95,9 @@ def parse(frame):
 
 def build(frame, command):
     packet = bytearray()
-    packet.append(frame['FIN'] << 7 | frame['OPCODE'])
-    
+    if (command == "echo"):
+        packet.append(frame['FIN'] << 7 | frame['OPCODE'])
+
     length = frame['PAYLOAD_LEN']
     if (command == "echo"):
         length -= 6
@@ -116,11 +117,56 @@ def build(frame, command):
         phrase = frame['PAYLOAD'].decode().split(" ", 1)
         packet.extend(phrase[1].encode())
         print(packet)
-    elif (command == "submission"):
-        pass
-    elif (command == "file"):
-        pass
     else:
         packet.extend(frame['PAYLOAD'])
 
+    return packet
+
+def buildFile(path):
+    packet = bytearray()
+    bin_data = open(path, 'rb').read()
+
+    packet.append(1 << 7 | 2)
+
+    length = len(bin_data)
+    if (length <= 125):
+        packet.append(length)
+    elif (length > 125 and length <= 65535):
+        packet.append(126)
+        packet.extend(struct.pack(">H", length))
+    elif (length < 18446744073709551616):
+        packet.append(127)
+        packet.extend(struct.pack(">Q", length))
+    else:
+        raise Exception("Message too big")
+
+    packet.extend(bin_data)
+    print(packet)
+
+    return packet
+
+def sendBin(payload, path):
+    packet = bytearray()
+    read_bytes = open(path, "rb").read()
+    payload_text = md5(payload['PAYLOAD']).hexdigest() == md5(read_bytes).hexdigest()
+
+    packet.append(1 << 7 | 1)
+    
+    length = len(read_bytes)
+    if (length <= 125):
+        packet.append(length)
+    elif (length > 125 and length <= 65535):
+        packet.append(126)
+        packet.extend(struct.pack(">H", length))
+    elif (length < 18446744073709551616):
+        packet.append(127)
+        packet.extend(struct.pack(">Q", length))
+    else:
+        raise Exception("Message too big")
+
+    if payload_text:
+        packet.append(1)
+    else:
+        packet.append(0)
+    
     return packet

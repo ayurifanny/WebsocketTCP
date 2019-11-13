@@ -29,19 +29,42 @@ class WebSocketHandler(StreamRequestHandler):
             buff = self.server.recv(10000)
             payload = parse(buff)
 
-            mss = payload['PAYLOAD'].decode()
-            received_message = mss.split(' ', 1)
-            if received_message[0] == '!echo':
-                if len(received_message) > 1:
-                    packet = build(payload, "echo")
-                    self.server.send(packet)
-                else:
-                    packet = build(payload, "")
-                    self.server.send(packet)
-            elif received_message[0] == "!submission":
-                packet = build(payload, "")
-                self.server.send(packet)
+            opcode = payload['OPCODE']
+            print(opcode)
 
+            if opcode == 1:
+                mss = payload['PAYLOAD'].decode()
+                received_message = mss.split(' ', 1)
+                if received_message[0] == '!echo':
+                    if len(received_message) > 1:
+                        packet = build(payload, "echo")
+                        self.server.send(packet)
+                    else:
+                        packet = build(payload, "")
+                        self.server.send(packet)
+                elif received_message[0] == "!submission":
+                    packet = buildFile("WebsocketTCP/client.html")
+                    self.server.send(packet)
+            elif opcode == 2:
+                pass
+            elif opcode == 8:
+                still_alive = False
+                return
+            elif opcode == 9:
+                mss = payload['PAYLOAD'].decode()
+                received_message = mss.split(' ', 1)
+                if received_message[0] == '!echo':
+                    if len(received_message) > 1:
+                        packet = build(payload, "echo")
+                        self.server.send(packet)
+                    else:
+                        packet = build(payload, "")
+                        self.server.send(packet)
+                elif received_message[0] == "!submission":
+                    packet = buildFile("WebsocketTCP/client.html")
+                    self.server.send(packet)
+            elif opcode == 10:
+                pass
 
         # !echo, !submission, ping pong
 
